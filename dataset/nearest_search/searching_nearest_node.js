@@ -32,7 +32,7 @@ function seaching_nearest_node(lat,lon){
         //Hitung jarak dari setiap node ke titik input
         const inputLat = parseFloat(latitude);
         const inputLon = parseFloat(longitude);
-        let closestNode = null;
+        let closestNode_id = null;
         let closestDistance = Infinity;
         data.elements.forEach((element) => {
             if (element.type === "node") {
@@ -40,18 +40,20 @@ function seaching_nearest_node(lat,lon){
                 const nodeLon = parseFloat(element.lon);
                 const distance = Math.sqrt(Math.pow(inputLat - nodeLat, 2) + Math.pow(inputLon - nodeLon, 2));
                 if (distance < closestDistance) {
-                    closestNode = element;
+                    closestNode_id = element.id;
                     closestDistance = distance;
                 }
             }
         });
 
         //Periksa apakah node terdapat dalam dataset
-        const closestNodeId = dataset.nodes.find(node => node.id === closestNode.id)?.id;
+        const closestNode_dataset = dataset[closestNode_id];
+        console.log(closestNode_dataset);
+    
 
-        if (closestNodeId) {
-            console.log(`Node terdekat dengan ID ${closestNodeId} ditemukan dalam dataset.`);
-            return closestNodeId;
+        if (closestNode_dataset) {
+            console.log(`Node terdekat dengan ID ${closestNode_id} ditemukan dalam dataset.`);
+            return closestNode_id;
         } else {
             console.log(`Node terdekat dengan ID ${closestNode.id} tidak ditemukan dalam dataset. Mencari node terdekat lainnya...`);
         }
