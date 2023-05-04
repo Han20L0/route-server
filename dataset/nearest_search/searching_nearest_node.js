@@ -1,7 +1,6 @@
 function seaching_nearest_node(lat,lon){
 
     const apiUrl = "https://www.overpass-api.de/api/interpreter?";
-
     const proximity = 5;
     const latitude = lat;
     const longitude = lon;
