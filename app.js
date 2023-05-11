@@ -41,11 +41,22 @@ app.use("/route",(req, res)=>{
     });
 
     //searching nearest node
+
+    //searching input koordinat source
     const lat_input = coordinates_input[0][0];
     console.log(lat_input);
     const lon_input = coordinates_input[0][1];
     console.log(lon_input);
     const searching_input = searching_nodes.seaching_nearest_node(lat_input,lon_input);
+
+    //searching input koordinat target
+    const lat_out = coordinates_input[1][0];
+    console.log(lat_input);
+    const lon_out = coordinates_input[1][1];
+    console.log(lon_input);
+    const searching_out = searching_nodes.seaching_nearest_node(lat_out,lon_out);
+
+
 });
 
 module.exports = app;
