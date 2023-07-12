@@ -6,11 +6,11 @@ function generate_geometries_response(traffic_data) {
   };
 
   for (const traffic of traffic_data) {
-    const { id, geometry, indicator_value } = traffic;
+    const { id, geometry, indicator_value, angle, heading } = traffic;
 
-    if (indicator_value === 1) responseGeometries.light.push(geometry);
-    else if (indicator_value === 2) responseGeometries.moderate.push(geometry);
-    else if (indicator_value === 3) responseGeometries.heavy.push(geometry);
+    if (indicator_value === 1) responseGeometries.light.push([geometry, angle, heading]);
+    else if (indicator_value === 2) responseGeometries.moderate.push([geometry, angle, heading]);
+    else if (indicator_value === 3) responseGeometries.heavy.push([geometry, angle, heading]);
   }
 
   return responseGeometries;

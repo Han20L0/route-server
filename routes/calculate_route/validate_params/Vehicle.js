@@ -8,7 +8,9 @@ function validating_vehicle(res, vehicle) {
 
   //Checking there is no other number between 1 or 0
   if (/^[01]$/.test(vehicle)) {
-    return parseInt(vehicle, 10);
+    if (parseInt(vehicle) === 0) return "motor";
+    if (parseInt(vehicle) === 1) return "car";
+    console.log(typeof vehicle);
   } else {
     return res.status(400).json({
       message: "vehicle is not valid. It should be either 0 or 1.",

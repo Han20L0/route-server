@@ -3,7 +3,7 @@ const mysql = require("mysql");
 const host = "localhost";
 const user = "root";
 const password = "";
-const database = "main_route_db";
+const database = "sample_route_db";
 
 const connection = mysql.createPool({
   host,
