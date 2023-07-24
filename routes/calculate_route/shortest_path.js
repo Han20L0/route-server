@@ -1,157 +1,96 @@
-// function search_shortest_path_dijkstra(graph, startID, endID) {
-//   const dijkstra_costs = {};
-
-//   // set initial values
-//   for (const nodeID in graph) {
-//     if (nodeID === startID) {
-//       dijkstra_costs[startID] = 0;
-//     } else {
-//       dijkstra_costs[nodeID] = Infinity;
-//     }
-//   }
-
-//   const visited_nodes =
-// }
-
-// reference: modified from https://hackernoon.com/how-to-implement-dijkstras-algorithm-in-javascript-abdfd1702d04
-const lowestCostNode = (costs, processed) => {
-  return Object.keys(costs).reduce((lowest, node) => {
-    if (lowest === null || costs[node] < costs[lowest]) {
-      if (!processed.includes(node)) {
-        lowest = node;
-      }
-    }
-
-    return lowest;
-  }, null);
-};
-
-// function that returns the minimum cost and path to reach Finish
 const dijkstra = (graph) => {
-  // track lowest cost to reach each node
-  const costs = Object.assign({ finish: Infinity }, graph.start);
+  const costs = { start: { start: 0 } };
 
-  // track paths
-  const parents = { finish: null };
-  for (let child in graph.start) {
-    parents[child] = "start";
+  for (node in graph) {
+    costs[node] = Infinity;
   }
 
-  // track nodes that have already been processed
-  const processed = [];
+  const queue = [];
+  const parent = {};
 
-  let node = lowestCostNode(costs, processed);
+  for (child in graph["start"]) {
+    queue.push(child);
+    costs[child] = graph["start"][child];
+    parent[child] = "start";
+  }
 
-  while (node) {
-    let cost = costs[node];
-    let children = graph[node];
-    for (let n in children) {
-      let newCost = cost + children[n];
-      if (parents[node] === n) continue;
-      if (!costs[n]) {
-        costs[n] = newCost;
-        parents[n] = node;
-      }
-      if (costs[n] > newCost) {
-        costs[n] = newCost;
-        parents[n] = node;
+  let count = 0;
+
+  while (queue.length > 0) {
+    const node = queue.shift();
+    for (child in graph[node]) {
+      if (child === "start") continue;
+
+      if (graph[node][child] + costs[node] < costs[child]) {
+        queue.push(child);
+        costs[child] = graph[node][child] + costs[node];
+        parent[child] = node;
       }
     }
+  }
+  console.log(parent);
 
-    processed.push(node);
-    node = lowestCostNode(costs, processed);
+  let current = "finish";
+
+  let pathString = "finish";
+
+  console.log(parent["10981995426"]);
+
+  let path = ["finish"];
+  while (current !== "start" && current !== undefined) {
+    const node = parent[current];
+
+    path.push(node);
+
+    pathString += ` <- ${node}`;
+    current = node;
   }
 
-  let optimalPath = ["finish"];
-  let parent = parents.finish;
+  path.reverse();
 
-  while (parent) {
-    optimalPath.push(parent);
-    parent = parents[parent];
-  }
-  optimalPath.reverse();
+  const cost = costs["finish"];
 
-  const results = {
-    cost: costs.finish,
-    path: optimalPath,
-  };
-
-  return results;
+  return { cost, path };
 };
 
-function recreate_graph(graph, sourceID, targetID) {
-  const graph_copy = Object.assign({}, graph);
+function create_graph(intersections) {
+  // purpose: creating a graph containing node with its neigbors /w cost
 
-  const start = graph_copy[sourceID];
-  const finish = graph_copy[targetID];
+  const graph = {};
 
-  graph_copy["start"] = start;
-  graph_copy["finish"] = finish;
-
-  // console.log(graph_copy[sourceID], graph_copy["start"]);
-
-  delete graph_copy[sourceID];
-  delete graph_copy[targetID];
-
-  for (const nodeID in graph_copy) {
-    try {
-      if (graph_copy[nodeID][targetID]) {
-        graph_copy[nodeID]["finish"] = graph_copy[nodeID][targetID];
-        delete graph_copy[nodeID][targetID];
-      }
-    } catch (e) {
-      // console.log(nodeID, targetID);
-      // console.log(graph_copy[nodeID]);
+  function add_edge(source, target, cost) {
+    if (!graph[source]) {
+      graph[source] = {};
     }
+
+    graph[source][target] = cost;
   }
 
-  return graph_copy;
+  for (const intersectionID in intersections) {
+    try {
+      const { source_node_id, target_node_id, cost } = intersections[intersectionID];
+
+      add_edge(source_node_id, target_node_id, cost);
+    } catch (e) {}
+  }
+
+  return graph;
 }
 
-function search_shortest_path(graph, sources, targets) {
+function search_shortest_path(intersections) {
   // with 2 source and 2 targets, the algorithm will used 4 times
   // approaches:
-  // 1.break sources to 2 sourceIDs
-  // 1.break targets to 2 targetIDs
-  // 2. perform dijkstra's algorithm for each combination
-  // 3. get 2 solutions with lowest cost
+  // 1. create graph of nodes and vertices
+  // 2. calculate shortest path using dijktra's algorithm
 
-  let best_cost = Infinity,
-    alternate_cost = Infinity;
-  let best_source, alternate_source;
-  let best_target, alternate_target;
-  let best_path, alternate_path;
+  // 1. create graph of nodes and vertices
+  const graph = create_graph(intersections);
 
-  for (const sourceID of sources) {
-    for (const targetID of targets) {
-      const recreated_graph = recreate_graph(graph, sourceID, targetID);
+  // 2. calculate shortest path using dijktra's algorithm
+  let { cost, path } = dijkstra(graph);
+  // console.log(path);
 
-      const { cost, path } = dijkstra(recreated_graph);
-
-      if (cost < best_cost) {
-        alternate_cost = best_cost;
-        alternate_path = best_path;
-        alternate_source = best_source;
-        alternate_target = best_target;
-
-        best_cost = cost;
-        best_path = path;
-        best_source = sourceID;
-        best_target = targetID;
-      } else if (cost < alternate_cost && cost !== best_cost) {
-        alternate_cost = cost;
-        alternate_path = path;
-        alternate_source = sourceID;
-        alternate_target = targetID;
-      }
-    }
-  }
-
-  console.log({ best_path, best_cost, alternate_path, alternate_cost });
-  console.log({ best_source, best_target, alternate_source, alternate_target });
-  console.log(best_path.length, alternate_path.length);
-
-  // return { best_path, best_cost, alternate_path, alternate_cost };
+  return { cost, path };
 }
 
 module.exports = search_shortest_path;

@@ -1,4 +1,4 @@
-const PADDING = 0.003;
+const PADDING = 0.01;
 
 function set_bounds(sourceCoordinates, targetCoordinates) {
   // approaches

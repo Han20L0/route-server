@@ -5,12 +5,11 @@ const user = "root";
 const password = "";
 const database = "sample_route_db";
 
-const connection = mysql.createPool({
+const connection = mysql.createConnection({
   host,
   user,
   password,
   database,
-  connectionLimit: 100,
 });
 
 const connect_db = () => {

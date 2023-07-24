@@ -41,7 +41,7 @@ async function create_ways_db(mysqlConnection) {
 async function create_nodes_db(mysqlConnection) {
   print_progress(`creating nodes table...`);
 
-  let query = `CREATE TABLE IF NOT EXISTS tb_nodes ( id bigint(20) NOT NULL, lat float NOT NULL, lon float NOT NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;`;
+  let query = `CREATE TABLE IF NOT EXISTS tb_nodes ( id bigint(20) NOT NULL, lat double NOT NULL, lon double NOT NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;`;
   await promisify(mysqlConnection, query);
   query = `ALTER TABLE tb_nodes ADD PRIMARY KEY (id);`;
   await promisify(mysqlConnection, query);

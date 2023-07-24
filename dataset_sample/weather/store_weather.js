@@ -29,7 +29,7 @@ function promisify(connection, query, values) {
 async function create_weathers_table(mysqlConnection) {
   print_progress(`creating traffics table...`);
 
-  let query = `CREATE TABLE tb_weathers (id int(11) NOT NULL, lat float NOT NULL, lon float NOT NULL, day varchar(10) NOT NULL,hour int(2) NOT NULL, weather_code int(4) NOT NULL, rating float NOT NULL, normalized_rating float NOT NULL, weather_text VARCHAR(20) NOT NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;`;
+  let query = `CREATE TABLE tb_weathers (id int(11) NOT NULL, lat double NOT NULL, lon double NOT NULL, day varchar(10) NOT NULL,hour int(2) NOT NULL, weather_code int(4) NOT NULL, rating double NOT NULL, normalized_rating double NOT NULL, weather_text VARCHAR(20) NOT NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;`;
   await promisify(mysqlConnection, query);
   query = `ALTER TABLE tb_weathers ADD PRIMARY KEY (id);`;
   await promisify(mysqlConnection, query);

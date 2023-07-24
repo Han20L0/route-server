@@ -44,9 +44,9 @@ function set_express_routes() {
    *      - name: priorities
    *        type: "string"
    *        in: query
-   *        description: "list of 5 number combination of priorities list of 1-5"
+   *        description: "list of 4 number combination of priorities list of 1-4"
    *        required: true
-   *        example: "12534"
+   *        example: "1423"
    *     responses:
    *       200:
    *        description: OK

@@ -22,49 +22,27 @@ async function get_all_intersection_within_bounds(bounds, vehicle_type) {
   const { west, east, south, north } = bounds;
 
   const selectColumnInner =
-    "DISTINCT(intersection.id), intersection.source_node_id, intersection.target_node_id, intersection.via_way_id, intersection.connector_list, intersection.continue_straight_id";
-  const tablesQuery = "tb_nodes AS nodes, tb_intersections AS intersection";
-  const idConstraints = "nodes.id = intersection.source_node_id";
-  const boundsConstraints = `nodes.lat < ${north} AND nodes.lat > ${south} AND nodes.lon > ${west} AND nodes.lon < ${east}`;
+    "id, source_node_id, intersection.target_node_id, via_way_id, connector_list, source_lat, source_lon, target_lat, target_lon";
+  const tablesQuery = "tb_intersections AS intersection";
+  const boundsConstraints = `source_lat < ${north} AND source_lat > ${south} AND source_lon > ${west} AND source_lon < ${east}`;
   const vehicleConstraints = generate_vehicle_constraint(vehicle_type);
 
-  const query = `SELECT ${selectColumnInner} 
+  const query = `SELECT ${selectColumnInner}
                   FROM ${tablesQuery}
-                  WHERE ${idConstraints} 
-                  AND ${boundsConstraints}
-                  AND intersection.${vehicleConstraints}`;
+                  WHERE ${boundsConstraints}
+                  AND ${vehicleConstraints}`;
   const intersection_list = await mysql_query(query);
 
   // turn list into objects
   let intersection_list_object = {};
   for (const intersection of intersection_list) {
-    const { id } = intersection;
+    const { source_node_id, target_node_id, via_way_id } = intersection;
 
     delete intersection.id;
-    intersection_list_object[id] = intersection;
+    intersection_list_object[`${source_node_id},${target_node_id},${via_way_id}`] = intersection;
   }
 
   return intersection_list_object;
-}
-
-async function get_all_traffic_light_nodes_within_bounds(bounds) {
-  // this function performs MySQL query to retrieve:
-  // node_id from tb_traffic_light_nodes
-  // this query using tb_nodes to get node_id on tb_traffic_light_nodes and to restrict outcome within bounds
-  // the outcome will be an array containing traffic_light_node_id(s)
-
-  const { west, east, south, north } = bounds;
-
-  const selectColumn = "node_id";
-  const tablesQuery = "tb_nodes AS nodes, tb_traffic_light_nodes as traffic_light";
-  const idConstraints = "nodes.id = traffic_light.node_id";
-  const boundsConstraints = `nodes.lat < ${north} AND nodes.lat > ${south} AND nodes.lon > ${west} AND nodes.lon < ${east}`;
-
-  const query = `SELECT ${selectColumn} FROM ${tablesQuery} WHERE ${idConstraints} AND ${boundsConstraints};`;
-
-  const traffic_lights = await mysql_query(query);
-
-  return traffic_lights;
 }
 
 async function get_all_connector_within_bounds(bounds, vehicle_type) {
@@ -81,23 +59,86 @@ async function get_all_connector_within_bounds(bounds, vehicle_type) {
   // LEFT JOIN tb_current_traffics ON connectors.id = tb_current_traffics.connector_id
   // WHERE connectors.startTileX >= 0 AND connectors.startTileY >= 0 AND connectors.endTileX <= 50000 AND connectors.endTileY <= 50000;
 
-  const query = `
-  SELECT DISTINCT(connectors.id), connectors.source_lat, connectors.source_lon, connectors.source_node_id, connectors.target_node_id, connectors.via_way_id, connectors.geometry, connectors.is_accessible_car, is_accessible_motor, connectors.heading, connectors.distance, connectors.duration, connectors.n_distance, connectors.n_duration, traffic.indicator_value as current_traffic, weathers.normalized_rating as condition_rating
-  FROM tb_connector as connectors
-  LEFT JOIN tb_current_traffics traffic ON connectors.id = traffic.connector_id
-  LEFT JOIN tb_current_weather weathers ON connectors.source_lon >= weathers.lon - 0.0049 AND connectors.source_lat >= weathers.lat - 0.0049 AND connectors.source_lon <= weathers.lon + 0.0049 AND connectors.source_lat <= connectors.source_lat >= weathers.lat + 0.0049
-  WHERE connectors.source_lon >= ${west} AND connectors.source_lat >= ${south} AND connectors.source_lon <= ${east} AND connectors.source_lat <= ${north}
-  AND connectors.${generate_vehicle_constraint(vehicle_type)};
+  // const connectors_query = `
+  // SELECT DISTINCT(connectors.id), connectors.source_lat, connectors.source_lon, connectors.target_lat, connectors.target_lon, connectors.source_node_id, connectors.target_node_id, connectors.via_way_id, connectors.geometry, connectors.is_accessible_car, is_accessible_motor, connectors.heading, connectors.distance, connectors.duration, weathers.normalized_rating as n_condition
+  // FROM tb_connector as connectors
+  // LEFT JOIN tb_current_weather weathers ON connectors.source_lon >= weathers.lon - 0.0049 AND connectors.source_lat >= weathers.lat - 0.0049 AND connectors.source_lon <= weathers.lon + 0.0049 AND connectors.source_lat <= connectors.source_lat >= weathers.lat + 0.0049
+  // AND connectors.${generate_vehicle_constraint(vehicle_type)};
+  // `;
+
+  const connectors_query = `SELECT id, source_lat, source_lon, target_lat, target_lon, source_node_id, target_node_id, via_way_id, geometry, is_accessible_car, is_accessible_motor, heading, distance, duration, neighbour_ids
+  FROM tb_connector
+  WHERE source_lon >= ${west} AND source_lat >= ${south} AND source_lon <= ${east} AND source_lat <= ${north}
   `;
 
-  const connectors = await mysql_query(query);
+  const traffics_query = `SELECT connector_id, indicator_value FROM tb_current_traffics`;
+  const weather_query = `SELECT lat, lon, normalized_rating from tb_current_weather WHERE (lon >= ${west} OR lon <= ${east}) AND (lat >= ${south} OR lat <= ${north})`;
+
+  const connectors = await mysql_query(connectors_query);
+  const traffics = await mysql_query(traffics_query);
+  const weathers = await mysql_query(weather_query);
+
+  console.log("connectors loaded");
+
+  function search_weather(lat, lon) {
+    for (const weather of weathers) {
+      const { lat: w_lat, lon: w_lon, normalized_rating } = weather;
+
+      const vertically = lat >= w_lat - 0.005 && lat <= w_lat + 0.005;
+      const horizontally = lon >= w_lon - 0.005 && lon <= w_lon + 0.005;
+
+      if (vertically && horizontally) return normalized_rating;
+    }
+  }
+
+  // turn traffics into object
+  const traffic_object = {};
+  for (const traffic of traffics) {
+    const { connector_id, indicator_value } = traffic;
+
+    traffic_object[connector_id] = indicator_value;
+  }
+
+  // normalizing distance & duration values
+  let minDuration = Infinity,
+    minDistance = Infinity;
+  let maxDuration = 0,
+    maxDistance = 0;
+
+  // search min-max value
+  for (const connector of connectors) {
+    const { distance, duration } = connector;
+
+    if (minDistance > distance) minDistance = distance;
+    if (maxDistance < distance) maxDistance = distance;
+
+    if (minDuration > duration) minDuration = duration;
+    if (maxDuration < duration) maxDuration = duration;
+  }
+
+  const deltaDistance = maxDistance - minDistance;
+  const deltaDuration = maxDuration - minDuration;
+
+  // save normalized value
+  for (const connector of connectors) {
+    let { distance, duration, current_traffic } = connector;
+    if (current_traffic === null) current_traffic = 1;
+
+    const normalizedDistance = (distance - minDistance) / deltaDistance;
+    const normalizedDuration = (duration - minDuration) / deltaDuration;
+
+    connector.n_distance = normalizedDistance;
+    connector.n_duration = normalizedDuration;
+    connector.n_traffic = (current_traffic - 1) / 2 || 0;
+  }
 
   // turn list into objects
   let connectors_object = {};
   for (const connector of connectors) {
-    const { id, source_node_id, target_node_id, via_way_id } = connector;
-
-    connectors_object[`${id},${source_node_id},${target_node_id},${via_way_id}`] = connector;
+    const { id, source_node_id, target_node_id, source_lat, source_lon } = connector;
+    connector.traffic = traffic_object[id] || 1;
+    connector.n_condition = search_weather(source_lat, source_lon);
+    connectors_object[`${source_node_id},${target_node_id}`] = connector;
   }
 
   return connectors_object;
@@ -120,10 +161,9 @@ async function retrieve_interection_information(bounds, vehicle_type) {
 
   const intersections = await get_all_intersection_within_bounds(bounds, vehicle_type);
   const connectors = await get_all_connector_within_bounds(bounds, vehicle_type);
-  const traffic_light_nodes = await get_all_traffic_light_nodes_within_bounds(bounds);
 
   // 5. return results
-  return { intersections, connectors, traffic_light_nodes };
+  return { intersections, connectors };
 }
 
 module.exports = retrieve_interection_information;

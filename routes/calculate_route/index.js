@@ -1,34 +1,26 @@
 const validate_request_params = require("./validate_params");
 const set_bounds = require("./bounding");
-const { search_nearby_nodes, search_nearby_nodes_by_intersection } = require("./nearby_intersection");
+const { search_nearby_access_points } = require("./nearby_intersection");
 const retrieve_interection_information = require("./retrieve_intersections");
-const connect_intersection_with_connectors = require("./add_values");
-const weight_intersection = require("./weight_intersections");
-const create_graph = require("./graph");
+const { set_connectors_cost, set_intersection_cost } = require("./add_values");
+const modify_entries = require("./modify_entries");
+const set_multipliers = require("./multipliers");
 const search_shortest_path = require("./shortest_path");
+const set_route_response = require("./generate_response");
 
 async function calculate_route(req, res) {
   // calculating route approaches:
-  // 1. validate request (source\target coordinates, vehicle type, priority list and linestring)
+  // 1. validate request (source\target coordinates, vehicle type, priority list)
   // 2. set bounds (w,e,s,n) between source\target coordinates
   // 3. get 2 nearby intersection nodes to source/target coordinates
   // 4. retrieve all information for weighting within bounds, including:
-  //  - intersection (with data from other tables):
-  //    - id
-  //    - intersection_connectors
-  //    - distance and duration
-  //    - traffic_light_on_end
-  //    - is_accessible_by_car
-  //    - way_quality
-  //  - connectors (with data from other tables):
-  //    - id
-  //    - generated_traffic_indicator
-
+  //  - intersection
+  //  - connectors
   // 5. weighting process
   // 6. Dijkstra's algorithm
   // 7.
 
-  // 1. validate request (source\target coordinates, vehicle type, priority list and linestring)
+  // 1. validate request (source\target coordinates, vehicle type, priority list)
   const { query } = req;
   const { coordinates_input, vehicle_input, priorities_input } = validate_request_params(res, query);
 
@@ -37,46 +29,36 @@ async function calculate_route(req, res) {
   // 2. set bounds (w,e,s,n) between source\target coordinates
   const boundings = set_bounds(source_coordinates, target_coordinates);
 
-  // 3. get nearby access points (source and target)
-  // 3. get 2 nearby intersection nodes to source/target coordinates
-  // 3b. get its nearby connector too
-  let nearbySourceNodeIDs = await search_nearby_nodes(source_coordinates, boundings);
-  let nearbyTargetNodeIDs = await search_nearby_nodes(target_coordinates, boundings);
-
-  console.log(nearbySourceNodeIDs[0].id, nearbyTargetNodeIDs[0].id);
-
-  // 4. retrieve all information for weighting within bounds, including:
-  //  - intersection (with data from other tables):
-  //    - id
-  //    - intersection_connectors
-  //    - distance and duration
-  //  - connectors (with data from other tables):
-  //    - id
-  //    - traffic indicator
-  //    - is_accessible_by_car
-  //    - current weather
-  //  - traffic light node IDs
-  const { intersections, connectors, traffic_light_nodes } = await retrieve_interection_information(boundings, vehicle_input);
+  // 3. retrieve all information for weighting within bounds, including:
+  //  - intersections
+  //  - connectors
+  const { intersections, connectors } = await retrieve_interection_information(boundings, vehicle_input);
 
   console.log(`loaded total intersections of ${Object.keys(intersections).length}`);
+  console.log(`loaded total connectors of ${Object.keys(connectors).length}`);
 
-  // renew nearby node ID
-  nearbySourceNodeIDs = search_nearby_nodes_by_intersection(intersections, nearbySourceNodeIDs);
-  nearbyTargetNodeIDs = search_nearby_nodes_by_intersection(intersections, nearbyTargetNodeIDs);
+  // 4. get nearest coordinate to road, and nearest connector
+  const start_access_points = await search_nearby_access_points(source_coordinates, boundings, connectors, intersections);
+  const finish_access_points = await search_nearby_access_points(target_coordinates, boundings, connectors, intersections);
 
-  console.log(nearbySourceNodeIDs, nearbyTargetNodeIDs);
+  console.log(start_access_points, finish_access_points);
 
-  // 5. add intersections values that based from connectors. like traffic and condition
-  const valued_intersection = connect_intersection_with_connectors(intersections, connectors);
+  // 5. modify connectors and intersection by inserting the nearest coordinate into connector entries and intersection entries
+  const { modified_connectors, modified_intersections } = modify_entries(start_access_points, finish_access_points, connectors, intersections);
 
-  // 6. weighting
-  const { multipliers, costed_intersections } = weight_intersection(valued_intersection, priorities_input);
-
-  // 7. create graph
-  const graph = create_graph(costed_intersections);
+  // 6. add intersections values that based from connectors. like traffic and condition
+  const multipliers = set_multipliers(priorities_input);
+  const costed_connectors = set_connectors_cost(modified_connectors, multipliers);
+  const costed_intersections = set_intersection_cost(modified_intersections, costed_connectors, multipliers);
 
   // 7. dijkstra's algorithm
-  search_shortest_path(graph, nearbySourceNodeIDs, nearbyTargetNodeIDs);
+  const { cost, path: best_route } = search_shortest_path(costed_intersections, start_access_points, finish_access_points);
+
+  // 8. generate geometry for route
+  const route_information = set_route_response(best_route, costed_intersections, costed_connectors);
+
+  // 9. return both route and geoemtry response
+  res.json(route_information);
 }
 
 module.exports = calculate_route;

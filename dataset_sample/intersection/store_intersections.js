@@ -28,7 +28,7 @@ function print_progress(text) {
 async function create_intersections_table(mysqlConnection) {
   print_progress(`creating intersections table...`);
 
-  let query = `CREATE TABLE IF NOT EXISTS tb_intersections (id int(11) NOT NULL,source_node_id bigint(20) NOT NULL,target_node_id bigint(20) NOT NULL,via_way_id bigint(20) NOT NULL, is_accessible_car int(1) NOT NULL, is_accessible_motor int(1) NOT NULL, continue_straight_id varchar(30) NULL, connector_list longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL CHECK (json_valid(connector_list))) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;`;
+  let query = `CREATE TABLE IF NOT EXISTS tb_intersections (id int(11) NOT NULL,source_node_id bigint(20) NOT NULL,target_node_id bigint(20) NOT NULL,via_way_id bigint(20) NOT NULL, source_lat double NOT NULL, source_lon double NOT NULL, target_lat double NOT NULL, target_lon double NOT NULL, is_accessible_car int(1) NOT NULL, is_accessible_motor int(1) NOT NULL, connector_list longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL CHECK (json_valid(connector_list))) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;`;
   await promisify(mysqlConnection, query);
   query = `ALTER TABLE tb_intersections ADD PRIMARY KEY (id), ADD UNIQUE KEY unique_data (source_node_id,target_node_id,via_way_id), ADD KEY target_node_id (target_node_id), ADD KEY via_way_id (via_way_id), ADD KEY source_node_id (source_node_id) USING BTREE;`;
   await promisify(mysqlConnection, query);
@@ -51,16 +51,25 @@ async function store_intersections_entries(mysqlConnection) {
 
   for (const id in intersections) {
     const [source_node_id, target_node_id, via_way_id] = id.split(",");
-    const { isAccessibleCar, isAccessibleMotor, connector_list, continue_straight_id } = intersections[id];
+    const {
+      isAccessibleCar,
+      isAccessibleMotor,
+      connector_list,
+      source_coordinate: { lat: sourceLat, lon: sourceLon },
+      target_coordinate: { lat: targetLat, lon: targetLon },
+    } = intersections[id];
 
-    const query = `INSERT INTO tb_intersections (source_node_id, target_node_id, via_way_id, is_accessible_car, is_accessible_motor, continue_straight_id, connector_list) VALUES (?, ?, ?, ?, ?, ?, ?)`;
+    const query = `INSERT INTO tb_intersections (source_node_id, target_node_id, via_way_id, source_lat, source_lon, target_lat, target_lon, is_accessible_car, is_accessible_motor, connector_list) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
     const values = [
       parseInt(source_node_id),
       parseInt(target_node_id),
       parseInt(via_way_id),
+      sourceLat,
+      sourceLon,
+      targetLat,
+      targetLon,
       isAccessibleCar,
       isAccessibleMotor,
-      continue_straight_id || null,
       JSON.stringify(connector_list),
     ];
 

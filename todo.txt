@@ -1,0 +1,36 @@
+TODO list:
+
+database:
+1. traffic [done]
+2. generated_connector_traffics [done]
+3. create connections file for use [done]
+  - use pooling [done]
+4. create script for running all store scripts at once [done]
+5. intersections connector [done]
+6. traffic light nodes [done]
+7. accessible [done]
+8. 
+
+---------------------------
+server:
+0. traffic generation
+  - [v] (performance) takes long time to generate traffic (aprrox 5mins), use multithreading [done]
+  - [v] (performance) takes too long to store approx 100k++ entries, need better performance [done]
+
+1. calculate route request
+  - 
+
+2. nearby traffic request [done]
+  - [] (tambahan) tambahkan parameter zoom untuk mengambil jalan yang sesuai dengan zoomnya
+      - zoom 15: semua jalan
+      - zoom 13-14: jalan secondary
+      - zoom 12: jalan utama
+  - [] (utama) ubah parameter menggunakan tile, dan ubah kembali tile menjadi koordinat
+
+3. Swagger documentation [v]
+
+
+
+
+notes:
+1. perhitungan berdasarkan lampu merah diganti menjadi jalan dengan intersection / belokan tersedikit (alias jalan lurus walaupun ada intersection???)

@@ -1,6 +1,12 @@
 const fs = require("fs");
-const { TRAFFIC_RESULT_DIR } = require("../filenames");
+const { TRAFFIC_RESULT_DIR, CONNECTOR_PATH } = require("../filenames");
 const { DAY_NAMES, DAY_START, DAY_END, HOUR_START, HOUR_END, MINUTE_START, MINUTE_END, MINUTE_INTERVAL } = require("../constants").TRAFFIC_CONSTANTS;
+
+let connectors = {};
+
+function init() {
+  connectors = JSON.parse(fs.readFileSync(CONNECTOR_PATH));
+}
 
 function promisify(connection, query, values) {
   if (values) {
@@ -66,10 +72,10 @@ function get_traffic_metadatas() {
 
 async function store_traffics_entries(mysqlConnection, metadata, data) {
   const { day_name, hour, minute } = metadata,
-    { numberID, indicator_value } = data;
+    { numberId, indicator_value } = data;
 
   // INSERT INTO `tb_traffic` (`id`, `way_id`, `day`, `hour`, `indicator_values`) VALUES
-  const query = `INSERT INTO tb_traffics (connector_id, day, hour, minute, indicator_value) VALUES (${numberID}, '${day_name}', ${hour}, ${minute}, ${indicator_value})`;
+  const query = `INSERT INTO tb_traffics (connector_id, day, hour, minute, indicator_value) VALUES (${numberId}, '${day_name}', ${hour}, ${minute}, ${indicator_value})`;
 
   return promisify(mysqlConnection, query);
 }
@@ -89,12 +95,12 @@ async function store_traffics_data(mysqlConnection) {
     const traffic_datas = JSON.parse(fs.readFileSync(filename));
 
     for (const id in traffic_datas) {
-      const [numberID, _] = id.split(",");
+      const { numberId } = connectors[id];
 
       const { dominantNumber: indicator_value } = traffic_datas[id];
 
       const metadata = { day_name, hour, minute };
-      const data = { numberID, indicator_value };
+      const data = { numberId, indicator_value };
 
       query_list.push(store_traffics_entries(mysqlConnection, metadata, data));
       count++;
@@ -115,6 +121,8 @@ function print_progress(text) {
 }
 
 async function store_traffics(mysqlConnection) {
+  init();
+
   const timeStart = performance.now();
   await create_traffics_table(mysqlConnection);
   await store_traffics_data(mysqlConnection);

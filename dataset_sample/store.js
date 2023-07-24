@@ -18,9 +18,8 @@ async function store() {
   connection.connect(async () => {
     console.log("DB connected");
 
-    await store_source(connection);
-    await store_nodes_derivatives(connection);
-    await store_ways_derivatives(connection);
+    // await store_source(connection);
+    // await store_ways_derivatives(connection);
     await store_intersections(connection);
     await store_traffic(connection);
     await store_weathers(connection);

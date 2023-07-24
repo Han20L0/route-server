@@ -33,6 +33,7 @@ async function get_traffic_within_bounds(tile) {
   AND ${restrictQuery}`;
 
   const query = `SELECT id, geometry, indicator_value, heading, angle from (${innerQuery}) as t;`;
+  console.log(query);
 
   const result = await mysql_query(query);
 
