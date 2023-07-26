@@ -204,6 +204,7 @@ async function search_nearby_access_points(input_coordinates, boundings, connect
   // 2. get nearest access point and nearest connector via OSRM-nearest
   const possible_nearbies = await get_nearby_connector_OSRM(input_coordinates, connectors);
 
+  let location_found = false;
   let nearby_coordinate = "";
   let nearby_connector_id;
   let nearby_intersection_id = "";
@@ -215,6 +216,7 @@ async function search_nearby_access_points(input_coordinates, boundings, connect
     const test_nearby_intersection_id = get_nearby_intersection_id_via_connector(intersections, test_nearby_connector_id);
 
     if (test_nearby_intersection_id) {
+      location_found = true;
       nearby_coordinate = location;
       nearby_connector_id = test_nearby_connector_id;
       nearby_intersection_id = test_nearby_intersection_id;
@@ -222,10 +224,7 @@ async function search_nearby_access_points(input_coordinates, boundings, connect
     }
   }
 
-  // // 5. connect both 2 of connectors ends with both 2 of intersection ends
-  // // const connected_ends = connect_ends(nearby_connector.location, nearby_connector.id, nearby_intersection_id, connectors, intersections);
-
-  return { nearby_coordinate, nearby_connector_id, nearby_intersection_id };
+  return { location_found, nearby_coordinate, nearby_connector_id, nearby_intersection_id };
 }
 
 function search_nearby_nodes_by_intersection(intersections, nearby_nodes, coordinate) {

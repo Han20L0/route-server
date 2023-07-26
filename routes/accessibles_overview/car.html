@@ -1,0 +1,138 @@
+<!-- modified from valhalla (https://github.com/valhalla/demos/blob/gh-pages/polyline/index.html)  -->
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Traffic Overview</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://npmcdn.com/leaflet@1.0.0-rc.2/dist/leaflet.css" />
+
+  <script>
+    //decode an encoded string
+    function decode(encoded, mul) {
+      //precision
+      var inv = 1.0 / mul;
+      var decoded = [];
+      var previous = [0, 0];
+      var i = 0;
+      //for each byte
+      while (i < encoded.length) {
+        //for each coord (lat, lon)
+        var ll = [0, 0]
+        for (var j = 0; j < 2; j++) {
+          var shift = 0;
+          var byte = 0x20;
+          //keep decoding bytes until you have this coord
+          while (byte >= 0x20) {
+            byte = encoded.charCodeAt(i++) - 63;
+            ll[j] |= (byte & 0x1f) << shift;
+            shift += 5;
+          }
+          //add previous offset to get final value and remember for next one
+          ll[j] = previous[j] + (ll[j] & 1 ? ~(ll[j] >> 1) : (ll[j] >> 1));
+          previous[j] = ll[j];
+        }
+        //scale by precision and chop off long coords also flip the positions so
+        //its the far more standard lon,lat instead of lat,lon
+        decoded.push([ll[1] * inv, ll[0] * inv]);
+      }
+      //hand back the list of coordinates
+      return decoded;
+    };
+  </script>
+</head>
+
+<body>
+  <div id="map" style="width: 100vw; height: 100vh"></div>
+  <script src="https://npmcdn.com/leaflet@1.0.0-rc.2/dist/leaflet.js"></script>
+  <script src="https://code.jquery.com/jquery-2.2.4.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44="
+    crossorigin="anonymous"></script>
+
+  <script>
+    //make a map using osm tiles
+    var map = L.map('map').setView([-6.977563, 107.631552], 15);
+    L.tileLayer('http://b.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 18,
+      attribution: '&copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributers'
+    }).addTo(map);
+  </script>
+
+  <script>
+    //text change callback
+    var geojson = null;
+    function render(geometries_response) {
+
+      try {
+        for (const traffic_type in geometries_response) {
+          const traffics = geometries_response[traffic_type];
+
+          const coordinates = []
+
+          for (const traffic of traffics) {
+            const geometry = traffic[0];
+            const decoded = decode(geometry, 1e6);
+
+            coordinates.push(decoded)
+          }
+
+          const json = {
+            type: 'FeatureCollection',
+            features: [{
+              type: 'Feature',
+              geometry: {
+                type: 'MultiLineString',
+                coordinates: coordinates
+              },
+              properties: {}
+            }]
+          };
+
+          let color;
+          if (traffic_type === 'light') {
+            color = "green"
+          }
+          if (traffic_type === 'moderate') {
+            color = "yellow"
+          }
+          if (traffic_type === 'heavy') {
+            color = "red"
+          }
+
+          geojson = L.geoJson(json, {
+            style: function (feature) {
+              return {
+                fillColor: feature.properties.fill,
+                color: color,
+                opacity: 0.75,
+                weight: 5,
+              };
+            }
+          });
+          //render the geojson
+          geojson.addTo(map);
+        }
+      }
+      catch (e) {
+        alert('Invalid Encoded Polyline');
+      }
+    };
+
+
+    //hook up the callback
+    // $("#encoded_polyline").on('keyup', render);
+    // $('#unescape').change(render);
+    // $('#polyline6').change(render);
+
+    //Check if we should initialize from anchor
+    window.onload = async function () {
+      const res = await fetch("http://localhost:3000/accessible/car");
+      const resJson = await res.json();
+
+      render(resJson.geometries_response)
+    };
+
+  </script>
+</body>
+
+</html>

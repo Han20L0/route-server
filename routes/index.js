@@ -2,23 +2,9 @@ const app = require("../app");
 const calculate_route = require("./calculate_route");
 const generate_data = require("./data_generation");
 const traffic_request = require("./traffic_request");
-const accessible_request = require("./accessibles/accessible_request");
-
-const set_accessible_status = require("./accessibles/set_accessibles");
-
-let view_accessibles = {
-  status: false,
-
-  // 0 for motorcycle, 1 for car
-  type: 0,
-};
-
-const set_accessibles = (status, type) => {
-  view_accessibles = {
-    status,
-    type,
-  };
-};
+const traffic_overview = require("./traffic_overview");
+const accessible_request = require("./accessibles");
+const accessible_overview = require("./accessibles_overview");
 
 function set_express_routes() {
   /**
@@ -33,7 +19,7 @@ function set_express_routes() {
    *        in: query
    *        description: source and target coordinates [lat,lon] seperated by semicolon(;)
    *        type: "string"
-   *        example: "-6.975219, 107.635548;-6.977775, 107.634733"
+   *        example: "-6.975219, 107.635548;-6.987370, 107.608222"
    *        required: true
    *      - name: vehicle
    *        type: "number"
@@ -53,51 +39,14 @@ function set_express_routes() {
    *       400:
    *        description: Invalid Parameter(s)
    */
-  app.use("/route", calculate_route);
-
-  /**
-   * @openapi
-   * '/traffic':
-   *  get:
-   *     tags:
-   *     - Traffic
-   *     summary: Get Trafiic information within bounds
-   *     parameters:
-   *      - name: x
-   *        in: query
-   *        description: X tile number
-   *        required: true
-   *        example: 26180
-   *      - name: y
-   *        in: query
-   *        description: Y tile number
-   *        required: true
-   *        example: 17020
-   *      - name: zoom
-   *        in: query
-   *        description: zoom level
-   *        required: true
-   *        example: 15
-   *     responses:
-   *       200:
-   *         description: Success
-   *       400:
-   *         description: Invalid parameter(s)
-   */
-  app.use("/traffic", (req, res) => {
-    if (view_accessibles.status) {
-      accessible_request(req, res, view_accessibles.type);
-    } else {
-      traffic_request(req, res);
-    }
-  });
+  app.get("/route", calculate_route);
 
   /**
    * @openapi
    * '/generate-data':
    *  get:
    *     tags:
-   *     - Traffic
+   *     - Setup
    *     summary: Perform Data (traffic, weather) generation
    *     parameters:
    *      - name: realtime
@@ -113,37 +62,46 @@ function set_express_routes() {
    *         description: Invalid parameter(s)
    */
 
-  app.use("/generate-data", generate_data);
+  app.get("/generate-data", generate_data);
 
   /**
    * @openapi
-   * '/view-accessible':
+   * '/traffic':
    *  get:
    *     tags:
    *     - Debug
-   *     summary: view all accessible road for selected vehicle, but disabling traffic view
+   *     summary: Get all Traffic information
+   *     responses:
+   *       200:
+   *         description: Success
+   *       400:
+   *         description: Invalid parameter(s)
+   */
+  app.get("/traffic", traffic_request);
+  app.get("/traffic-overview", traffic_overview);
+
+  /**
+   * @openapi
+   * '/accessible/{type}':
+   *  get:
+   *     tags:
+   *     - Debug
+   *     summary: view all accessible road for selected vehicle. this may cast error because too many data in response
    *     parameters:
-   *      - name: status
-   *        in: query
+   *      - name: type
+   *        in: path
    *        type: integer
-   *        description: 0 for false, 1 for true
+   *        description: motor or car
    *        required: true
-   *        example: 1
-   *      - name: vehicle_type
-   *        in: query
-   *        type: integer
-   *        description: 0 for motorcycle, 1 for car
-   *        required: true
-   *        example: 0
+   *        example: motor
    *     responses:
    *       200:
    *         description: OK
    *       400:
    *         description: Invalid parameter(s)
    */
-  app.use("/view-accessible", (req, res) => {
-    set_accessible_status(req, res, set_accessibles);
-  });
+  app.get("/accessible/:type", accessible_request);
+  app.get("/accessible-overview/:type", accessible_overview);
 }
 
 module.exports = set_express_routes;

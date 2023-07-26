@@ -64,15 +64,31 @@ function generate_overview_info(paths, intersections, connectors) {
   return { total_distance, total_duration, total_cost };
 }
 
+function generate_overview_path(paths) {
+  // paths.reverse();
+
+  let pathString = "";
+
+  paths.forEach((path, idx) => {
+    pathString += `${path} `;
+
+    if (idx < paths.length - 1) {
+      pathString += "-> ";
+    }
+  });
+
+  return pathString;
+}
+
 function generate_overview(paths, intersections, connectors) {
   const overview_info = generate_overview_info(paths, intersections, connectors);
   const { waypoints, traffics } = generate_overview_waypoints(paths, intersections, connectors);
 
   const overview_geometries = generate_overview_geoemetries(waypoints);
-
   const overview_geometries_traffic = generate_overview_geoemetries_traffic(waypoints, traffics);
+  const pathString = generate_overview_path(paths);
 
-  return { overview_info, overview_geometries, overview_geometries_traffic };
+  return { overview_info, overview_geometries, overview_geometries_traffic, pathString };
 }
 
 module.exports = generate_overview;

@@ -15,6 +15,10 @@ const options = {
         url: "http://localhost:3000",
         description: "local",
       },
+      {
+        url: "https://route.ii-api.net/",
+        description: "remote-server",
+      },
     ],
   },
   apis: ["./routes/index.js"],

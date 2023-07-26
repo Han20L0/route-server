@@ -41,6 +41,10 @@ async function calculate_route(req, res) {
   const start_access_points = await search_nearby_access_points(source_coordinates, boundings, connectors, intersections);
   const finish_access_points = await search_nearby_access_points(target_coordinates, boundings, connectors, intersections);
 
+  if (!start_access_points.location_found || !finish_access_points.location_found) {
+    return res.status(400).json({ code: "error", error: "access points not found" });
+  }
+
   console.log(start_access_points, finish_access_points);
 
   // 5. modify connectors and intersection by inserting the nearest coordinate into connector entries and intersection entries
@@ -52,13 +56,17 @@ async function calculate_route(req, res) {
   const costed_intersections = set_intersection_cost(modified_intersections, costed_connectors, multipliers);
 
   // 7. dijkstra's algorithm
-  const { cost, path: best_route } = search_shortest_path(costed_intersections, start_access_points, finish_access_points);
+  const { path: best_route, found: pathFound } = search_shortest_path(costed_intersections, start_access_points, finish_access_points);
+
+  if (!pathFound) {
+    return res.status(400).json({ code: "error", error: "Route not found" });
+  }
 
   // 8. generate geometry for route
   const route_information = set_route_response(best_route, costed_intersections, costed_connectors);
 
   // 9. return both route and geoemtry response
-  res.json(route_information);
+  return res.status(200).json({ code: "success", route: route_information });
 }
 
 module.exports = calculate_route;

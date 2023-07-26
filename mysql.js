@@ -5,20 +5,27 @@ const user = "root";
 const password = "";
 const database = "sample_route_db";
 
-const connection = mysql.createConnection({
+// const host = "srv167.niagahoster.com";
+// const user = "iiap1764_iiko";
+// const password = "uJU0+p?_48R}";
+// const database = "iiap1764_sample_route_db";
+
+const connection = mysql.createPool({
   host,
   user,
   password,
   database,
+  connectionLimit: 10,
+  acquireTimeout: 10000,
 });
 
 const connect_db = () => {
-  if (connection.state === "connected") {
-    connection.connect((err) => {
-      if (err) throw console.log(err);
-      console.log("DB connected!");
-    });
-  }
+  // connection.connect((err) => {
+  //   if (err) throw console.log(err);
+  //   console.log("DB connected!");
+  // });
+
+  return connection.config;
 };
 
 const mysql_query = async (query) => {

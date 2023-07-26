@@ -3,6 +3,8 @@
     "@google-cloud/cloud-sql-connector": "^0.5.0",
     "@mapbox/polyline": "^1.2.0",
     "convert-array-to-csv": "^2.0.0",
+    "cors": "^2.8.5",
+    "cytoscape": "^3.25.0",
     "express": "^4.18.2",
     "mysql": "^2.18.1",
     "mysql-connection-pool-manager": "^1.5.9",
@@ -11,7 +13,7 @@
   },
   "name": "route-server",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
     "start": "npx kill-port 3002 && node server.js"
   },

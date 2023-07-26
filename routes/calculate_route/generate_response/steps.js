@@ -96,6 +96,7 @@ function generate_next_steps(paths, intersections, connectors) {
 
   for (let pathIdx = 0; pathIdx < paths.length - 1; pathIdx++) {
     const intersectionID = `${paths[pathIdx]},${paths[pathIdx + 1]}`;
+    console.log(intersectionID);
     const { connector_list } = intersections[intersectionID];
 
     for (const connectorID of JSON.parse(connector_list)) {
