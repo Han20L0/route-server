@@ -1,6 +1,6 @@
 const fs = require("fs");
 
-const SIM_ALLOWED = true;
+const SIM_ALLOWED = false;
 
 const create_sim_file = (graph, intersections, count, currentNode, parents, costs, priorityQueue, multipliers) => {
   const allowed_ids = new Set();
