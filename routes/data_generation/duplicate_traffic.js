@@ -8,8 +8,8 @@ async function check_table() {
   return false;
 }
 
-async function duplicate_table(dayName, hour, minute) {
-  const duplicateQuery = `CREATE TABLE tb_current_traffics AS SELECT id, connector_id, indicator_value FROM tb_traffics WHERE day='${dayName}' AND hour=${hour} AND minute=${minute};`;
+async function duplicate_table(dayName, hour) {
+  const duplicateQuery = `CREATE TABLE tb_current_traffics AS SELECT id, connector_id, indicator_value FROM tb_traffics WHERE day='${dayName}' AND hour=${hour};`;
   await mysql_query(duplicateQuery);
 }
 
@@ -18,14 +18,14 @@ async function drop_table() {
   await mysql_query(dropQuery);
 }
 
-async function duplicate_traffic(dayName, hour, minute) {
+async function duplicate_traffic(dayName, hour) {
   const isTableExists = await check_table();
 
   if (isTableExists) {
     await drop_table();
   }
 
-  await duplicate_table(dayName, hour, minute);
+  await duplicate_table(dayName, hour);
 }
 
 module.exports = duplicate_traffic;

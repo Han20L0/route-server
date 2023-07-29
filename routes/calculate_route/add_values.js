@@ -15,7 +15,7 @@ function get_intersection_value(connectors, connector_list) {
 
   for (const connectorID of connector_list) {
     if (connectors[connectorID]) {
-      const { distance, duration, n_distance, n_duration, current_traffic, n_condition } = connectors[connectorID];
+      const { distance, duration, n_distance, n_duration, traffic: current_traffic, n_condition } = connectors[connectorID];
 
       total_distance += distance;
       total_n_distance += n_distance;

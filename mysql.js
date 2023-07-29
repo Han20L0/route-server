@@ -4,6 +4,7 @@ const host = "localhost";
 const user = "root";
 const password = "";
 const database = "sample_route_db";
+// const database = "backup_route_db";
 
 // const host = "srv167.niagahoster.com";
 // const user = "iiap1764_iiko";

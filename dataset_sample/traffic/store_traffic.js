@@ -1,6 +1,6 @@
 const fs = require("fs");
 const { TRAFFIC_RESULT_DIR, CONNECTOR_PATH } = require("../filenames");
-const { DAY_NAMES, DAY_START, DAY_END, HOUR_START, HOUR_END, MINUTE_START, MINUTE_END, MINUTE_INTERVAL } = require("../constants").TRAFFIC_CONSTANTS;
+const { DAY_NAMES, DAY_START, DAY_END, HOUR_START, HOUR_END } = require("../constants").TRAFFIC_CONSTANTS;
 
 let connectors = {};
 
@@ -29,7 +29,7 @@ function promisify(connection, query, values) {
 async function create_traffics_table(mysqlConnection) {
   print_progress(`creating traffics table...`);
 
-  let query = `CREATE TABLE tb_traffics (id int(11) NOT NULL,connector_id int(11) NOT NULL,day varchar(10) NOT NULL,hour int(2) NOT NULL, minute int(2) NOT NULL,indicator_value int(1) NOT NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;`;
+  let query = `CREATE TABLE tb_traffics (id int(11) NOT NULL,connector_id int(11) NOT NULL,day varchar(10) NOT NULL,hour int(2) NOT NULL,indicator_value int(1) NOT NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;`;
   await promisify(mysqlConnection, query);
   query = `ALTER TABLE tb_traffics ADD PRIMARY KEY (id),ADD KEY connector_id (connector_id);`;
   await promisify(mysqlConnection, query);
@@ -52,18 +52,12 @@ function get_traffic_metadatas() {
       let hourString = hour < 10 ? "0" : "";
       hourString += hour;
 
-      for (let minute = MINUTE_START; minute < MINUTE_END; minute += MINUTE_INTERVAL) {
-        let minuteString = minute < 10 ? "0" : "";
-        minuteString += minute;
-
-        const filename = `${TRAFFIC_RESULT_DIR}\\${day_name}\\${day_name}_${hourString}.${minuteString}.json`;
-        traffic_metadata.push({
-          day_name,
-          hour,
-          minute,
-          filename,
-        });
-      }
+      const filename = `${TRAFFIC_RESULT_DIR}\\${day_name}\\${day_name}_${hourString}.00.json`;
+      traffic_metadata.push({
+        day_name,
+        hour,
+        filename,
+      });
     }
   }
 
@@ -71,11 +65,11 @@ function get_traffic_metadatas() {
 }
 
 async function store_traffics_entries(mysqlConnection, metadata, data) {
-  const { day_name, hour, minute } = metadata,
+  const { day_name, hour } = metadata,
     { numberId, indicator_value } = data;
 
   // INSERT INTO `tb_traffic` (`id`, `way_id`, `day`, `hour`, `indicator_values`) VALUES
-  const query = `INSERT INTO tb_traffics (connector_id, day, hour, minute, indicator_value) VALUES (${numberId}, '${day_name}', ${hour}, ${minute}, ${indicator_value})`;
+  const query = `INSERT INTO tb_traffics (connector_id, day, hour, indicator_value) VALUES (${numberId}, '${day_name}', ${hour}, ${indicator_value})`;
 
   return promisify(mysqlConnection, query);
 }
@@ -89,8 +83,8 @@ async function store_traffics_data(mysqlConnection) {
   const traffic_metadatas = get_traffic_metadatas();
 
   for (const traffic_metadata of traffic_metadatas) {
-    const { day_name, hour, minute, filename } = traffic_metadata;
-    print_progress(`storing traffics data ${day_name}, ${hour}:${minute}...`);
+    const { day_name, hour, filename } = traffic_metadata;
+    print_progress(`storing traffics data ${day_name}, ${hour}:00...`);
 
     const traffic_datas = JSON.parse(fs.readFileSync(filename));
 
@@ -99,7 +93,7 @@ async function store_traffics_data(mysqlConnection) {
 
       const { dominantNumber: indicator_value } = traffic_datas[id];
 
-      const metadata = { day_name, hour, minute };
+      const metadata = { day_name, hour };
       const data = { numberId, indicator_value };
 
       query_list.push(store_traffics_entries(mysqlConnection, metadata, data));

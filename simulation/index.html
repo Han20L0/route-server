@@ -9,8 +9,12 @@
   <script src="https://unpkg.com/cytoscape-edgehandles/cytoscape-edgehandles.js"></script>
   <script src="./index.js"></script>
   <style>
+    .main {
+      display: inline;
+    }
+
     #cy {
-      width: 75%;
+      width: 60%;
       height: 100%;
       position: absolute;
       left: 0;
@@ -18,11 +22,92 @@
       z-index: 999;
       background-color: #f0f0f0;
     }
+
+    #dataview {
+      width: 35%;
+      height: 100%;
+      background-color: #f0f0f0;
+      float: right;
+      padding: 5px;
+    }
+
+    .frame {
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+      display: flex;
+    }
+
+    input {
+      padding: 10px;
+      font-size: 20px;
+    }
+
+    .text {
+      font-size: 24px;
+      font-weight: bold;
+    }
+
+    .priorityQueue,
+    .visitedNodes {
+      max-height: 30%;
+      overflow: auto;
+    }
+
+    table,
+    th,
+    td {
+      width: 100%;
+      border: 1px solid black;
+    }
+
+    tr {
+      background-color: #f0f0f0;
+    }
+
+    th,
+    td {
+      padding: 10px;
+    }
+
+    tr:hover {
+      background-color: #aaaaaa;
+      cursor: pointer;
+    }
   </style>
 </head>
 
 <body>
-  <div id="cy"></div>
+  <div class="main">
+    <div id="cy"></div>
+
+    <div id="dataview">
+      <!-- frame input -->
+      <div class="frame">
+        <span class="text" style="margin-right: 10px;">Frame:</span> <input type="number" name="" id="frame" value="0" min="0">
+      </div>
+
+      <!-- priority queue -->
+      <p class="text">Current Node:</p>
+      <table id="currentNode">
+      </table>
+
+
+      <!-- priority queue -->
+      <p class="text">Priority Queue:</p>
+      <div class="priorityQueue">
+        <table id="priorityQueue"></table>
+      </div>
+
+
+      <!-- visited nodes and its costs + via -->
+      <p class="text">Visited Nodes:</p>
+      <div class="visitedNodes">
+        <table id="visitedNodes"></table>
+      </div>
+    </div>
+  </div>
+
 </body>
 
 </html>

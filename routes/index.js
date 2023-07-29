@@ -19,7 +19,7 @@ function set_express_routes() {
    *        in: query
    *        description: source and target coordinates [lat,lon] seperated by semicolon(;)
    *        type: "string"
-   *        example: "-6.975219, 107.635548;-6.987370, 107.608222"
+   *        example: "-6.972689,107.638447;-6.971672,107.639164"
    *        required: true
    *      - name: vehicle
    *        type: "number"

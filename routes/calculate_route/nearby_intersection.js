@@ -103,9 +103,16 @@ async function get_nearby_connector_OSRM(input_coordinates, connectors) {
   const inputLat = input_coordinates[0],
     inputLon = input_coordinates[1];
 
-  const URL = `https://router.project-osrm.org/nearest/v1/driving/${inputLon},${inputLat}?number=100`;
-  const request = await fetch(URL);
-  const responseJSON = await request.json();
+  let responseJSON;
+
+  while (true) {
+    try {
+      const URL = `https://router.project-osrm.org/nearest/v1/driving/${inputLon},${inputLat}?number=100`;
+      const request = await fetch(URL);
+      responseJSON = await request.json();
+      break;
+    } catch (e) {}
+  }
 
   const possible_nearby = [];
 

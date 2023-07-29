@@ -96,7 +96,6 @@ function generate_next_steps(paths, intersections, connectors) {
 
   for (let pathIdx = 0; pathIdx < paths.length - 1; pathIdx++) {
     const intersectionID = `${paths[pathIdx]},${paths[pathIdx + 1]}`;
-    console.log(intersectionID);
     const { connector_list } = intersections[intersectionID];
 
     for (const connectorID of JSON.parse(connector_list)) {
@@ -175,7 +174,6 @@ function generate_next_steps(paths, intersections, connectors) {
       stack_distance = distance;
       stack_duration = duration;
 
-      console.log(step);
       steps.push(step);
     } else {
       stack_distance += distance;
@@ -192,7 +190,6 @@ function generate_next_steps(paths, intersections, connectors) {
     } else {
       step = generate_first_step(prev_angle, stack_distance, stack_duration);
     }
-    console.log(step);
     steps.push(step);
   }
 

@@ -6,15 +6,6 @@ const DAY_END = 6;
 const HOUR_START = 0;
 const HOUR_END = 23;
 
-function get_random_minute() {
-  // generate number between 0 and 1
-  let randomNumber = Math.round(Math.random());
-
-  // if random number is 1, return 30. else return 0
-  if (randomNumber) return 30;
-  return 0;
-}
-
 function get_random_hour() {
   let randomHour = Math.floor(Math.random() * (HOUR_END - HOUR_START + 1)) + HOUR_START;
   return randomHour;
@@ -23,15 +14,6 @@ function get_random_hour() {
 function get_random_day() {
   const randomDate = Math.floor(Math.random() * (DAY_END - DAY_START + 1));
   return DAY_NAMES[randomDate];
-}
-
-function get_real_minute() {
-  const todayDate = new Date();
-
-  let todayMinute = todayDate.getMinutes();
-
-  if (todayMinute > 30) return 30;
-  return 0;
 }
 
 function get_real_hour() {
@@ -54,19 +36,17 @@ function get_day_hour(IS_REALTIME) {
   // 2. get real/random day -> dayName [Sun, Mon, Tue, ...]
   // 3. get real/random hour -> hourString
 
-  let hour, dayName, minute;
+  let hour, dayName;
 
   if (IS_REALTIME) {
     dayName = get_real_day();
     hour = get_real_hour();
-    minute = get_real_minute();
   } else {
     dayName = get_random_day();
     hour = get_random_hour();
-    minute = get_random_minute();
   }
 
-  return { dayName, hour, minute };
+  return { dayName, hour };
 }
 
 module.exports = get_day_hour;

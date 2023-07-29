@@ -18,7 +18,7 @@ function insert_source_point(nearby_access_point, connectors, point_name) {
 
   const connector = connectors[nearby_connector_id];
 
-  const { source_lat, source_lon, target_lat, target_lon, distance, duration } = connector;
+  const { source_lat, source_lon, target_lat, target_lon, distance, duration, n_distance, n_duration } = connector;
   const [point_lat, point_lon] = nearby_coordinate;
 
   // 2. connect nearby_coordinate to the ends making 2 new connectors
@@ -30,6 +30,8 @@ function insert_source_point(nearby_access_point, connectors, point_name) {
 
   const new_distance = (source_point_euclidean_distance / source_target_euclidean_distance) * distance;
   const new_duration = (source_point_euclidean_distance / source_target_euclidean_distance) * duration;
+  const new_n_distance = (source_point_euclidean_distance / source_target_euclidean_distance) * n_distance;
+  const new_n_duration = (source_point_euclidean_distance / source_target_euclidean_distance) * n_duration;
 
   const source_point_geometry = search_geometry(source_lat, source_lon, point_lat, point_lon);
   connectors[source_point_id] = {
@@ -37,6 +39,8 @@ function insert_source_point(nearby_access_point, connectors, point_name) {
     ...{
       distance: new_distance,
       duration: new_duration,
+      n_distance: new_n_distance,
+      n_duration: new_n_duration,
       geometry: source_point_geometry,
       target_lat: point_lat,
       target_lon: point_lon,
@@ -58,6 +62,8 @@ function insert_source_point(nearby_access_point, connectors, point_name) {
         geometry: point_source_geometry,
         distance: new_distance,
         duration: new_duration,
+        n_distance: new_n_distance,
+        n_duration: new_n_duration,
       },
     };
   }
@@ -79,7 +85,7 @@ function insert_point_target(nearby_access_point, connectors, point_name) {
 
   const connector = connectors[nearby_connector_id];
 
-  const { source_lat, source_lon, target_lat, target_lon, distance, duration } = connector;
+  const { source_lat, source_lon, target_lat, target_lon, distance, duration, n_distance, n_duration } = connector;
   const [point_lat, point_lon] = nearby_coordinate;
 
   // 2. connect nearby_coordinate to the ends making 2 new connectors
@@ -91,6 +97,8 @@ function insert_point_target(nearby_access_point, connectors, point_name) {
 
   const new_distance = (point_target_euclidean_distance / source_target_euclidean_distance) * distance;
   const new_duration = (point_target_euclidean_distance / source_target_euclidean_distance) * duration;
+  const new_n_distance = (point_target_euclidean_distance / source_target_euclidean_distance) * n_distance;
+  const new_n_duration = (point_target_euclidean_distance / source_target_euclidean_distance) * n_duration;
 
   const point_target_geometry = search_geometry(source_lat, source_lon, point_lat, point_lon);
   connectors[point_target_id] = {
@@ -98,6 +106,8 @@ function insert_point_target(nearby_access_point, connectors, point_name) {
     ...{
       distance: new_distance,
       duration: new_duration,
+      n_distance: new_n_distance,
+      n_duration: new_n_duration,
       geometry: point_target_geometry,
       source_lat: point_lat,
       source_lon: point_lon,
@@ -119,6 +129,8 @@ function insert_point_target(nearby_access_point, connectors, point_name) {
         geometry: target_point_geometry,
         distance: new_distance,
         duration: new_duration,
+        n_distance: new_n_distance,
+        n_duration: new_n_duration,
       },
     };
   }
@@ -166,7 +178,7 @@ function insert_start_finish(start_access_points, finish_access_points, connecto
 
   const connector = connectors[nearby_connector_id];
 
-  const { source_node_id, target_node_id, distance, duration, source_lat, target_lat, source_lon, target_lon } = connector;
+  const { source_node_id, target_node_id, distance, duration, source_lat, target_lat, source_lon, target_lon, n_distance, n_duration } = connector;
 
   const start_finish_id = "start,finish";
 
@@ -175,6 +187,8 @@ function insert_start_finish(start_access_points, finish_access_points, connecto
 
   const new_distance = (start_finish_euclidean_distance / source_target_euclidean_distance) * distance;
   const new_duration = (start_finish_euclidean_distance / source_target_euclidean_distance) * duration;
+  const new_n_distance = (start_finish_euclidean_distance / source_target_euclidean_distance) * n_distance;
+  const new_n_duration = (start_finish_euclidean_distance / source_target_euclidean_distance) * n_duration;
 
   const start_finish_geometry = search_geometry(start_lat, start_lon, finish_lat, finish_lon);
   connectors[start_finish_id] = {
@@ -182,6 +196,8 @@ function insert_start_finish(start_access_points, finish_access_points, connecto
     ...{
       distance: new_distance,
       duration: new_duration,
+      n_distance: new_n_distance,
+      n_duration: new_n_duration,
       geometry: start_finish_geometry,
       source_lat: start_lat,
       source_lon: start_lon,
@@ -202,6 +218,8 @@ function insert_start_finish(start_access_points, finish_access_points, connecto
       ...{
         distance: new_distance,
         duration: new_duration,
+        n_distance: new_n_distance,
+        n_duration: new_n_duration,
         geometry: finish_start_geometry,
         source_lat: finish_lat,
         source_lon: finish_lon,
