@@ -10,10 +10,10 @@ function generate_overview_waypoints(paths, intersections, connectors) {
     const { connector_list } = intersections[intersectionID];
 
     for (const connectorID of JSON.parse(connector_list)) {
-      const { source_lat, source_lon, target_lat, target_lon, traffic } = connectors[connectorID];
+      const { source_lat, source_lon, target_lat, target_lon, current_traffic } = connectors[connectorID];
       waypoints_coordinates_set.add(`${source_lat},${source_lon}`);
       waypoints_coordinates_set.add(`${target_lat},${target_lon}`);
-      traffics.push(traffic);
+      traffics.push(current_traffic);
     }
   }
 

@@ -126,7 +126,7 @@
 
     //Check if we should initialize from anchor
     window.onload = async function () {
-      const res = await fetch("http://localhost:3000/traffic?x=26180&y=17020&zoom=15");
+      const res = await fetch("http://localhost:3000/traffic");
       const resJson = await res.json();
 
       render(resJson.geometries_response)

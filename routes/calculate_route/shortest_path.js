@@ -155,14 +155,6 @@ class PriorityQueue {
     }
     return elem;
   }
-  front() {
-    if (this.isEmpty()) return "The Queue is Empty..!";
-    return this.queArr[0];
-  }
-  rear() {
-    if (this.isEmpty()) return "The Queue is Empty..!";
-    return this.queArr[this.queArr.length - 1];
-  }
   isEmpty() {
     return this.queArr.length == 0;
   }

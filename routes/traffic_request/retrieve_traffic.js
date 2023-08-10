@@ -1,5 +1,4 @@
 const { mysql_query } = require("../../mysql");
-const MERCATOR = require("../../utils/mercator");
 
 async function get_all_traffic() {
   // approaches:

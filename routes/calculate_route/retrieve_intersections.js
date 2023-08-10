@@ -1,5 +1,4 @@
 const { mysql_query } = require("../../mysql");
-const MERCATOR = require("../../utils/mercator");
 
 function generate_vehicle_constraint(vehicle_type) {
   if (vehicle_type === "motor") {
@@ -8,6 +7,39 @@ function generate_vehicle_constraint(vehicle_type) {
   if (vehicle_type === "car") {
     return "is_accessible_car = 1";
   }
+}
+
+function search_weather(lat, lon, weathers) {
+  for (const weather of weathers) {
+    const { lat: w_lat, lon: w_lon, normalized_rating } = weather;
+
+    const vertically = lat >= w_lat - 0.005 && lat <= w_lat + 0.005;
+    const horizontally = lon >= w_lon - 0.005 && lon <= w_lon + 0.005;
+
+    if (vertically && horizontally) return normalized_rating;
+  }
+}
+
+function get_duration(distance, traffic_indicator) {
+  let speed;
+
+  switch (traffic_indicator) {
+    case 1:
+      // 13 KMH -> 3.61 m/s
+      speed = 3.61;
+      break;
+    case 2:
+      // 11 KMH -> 3.05 m/s
+      speed = 3.05;
+      break;
+    case 3:
+      // 7 KMH -> 1.94 m/s
+      speed = 1.94;
+      break;
+  }
+
+  const duration = distance / speed;
+  return duration;
 }
 
 async function get_all_intersection_within_bounds(bounds, vehicle_type) {
@@ -66,9 +98,9 @@ async function get_all_connector_within_bounds(bounds, vehicle_type) {
   // AND connectors.${generate_vehicle_constraint(vehicle_type)};
   // `;
 
-  const connectors_query = `SELECT id, source_lat, source_lon, target_lat, target_lon, source_node_id, target_node_id, via_way_id, geometry, is_accessible_car, is_accessible_motor, heading, distance, duration, neighbour_ids
+  const connectors_query = `SELECT id, source_lat, source_lon, target_lat, target_lon, source_node_id, target_node_id, geometry, distance, n_distance, neighbour_ids
   FROM tb_connector
-  WHERE source_lon >= ${west} AND source_lat >= ${south} AND source_lon <= ${east} AND source_lat <= ${north}
+  WHERE tb_connector.source_lon >= ${west} AND tb_connector.source_lat >= ${south} AND tb_connector.source_lon <= ${east} AND tb_connector.source_lat <= ${north}
   `;
 
   const traffics_query = `SELECT connector_id, indicator_value FROM tb_current_traffics`;
@@ -80,17 +112,6 @@ async function get_all_connector_within_bounds(bounds, vehicle_type) {
 
   console.log("connectors loaded");
 
-  function search_weather(lat, lon) {
-    for (const weather of weathers) {
-      const { lat: w_lat, lon: w_lon, normalized_rating } = weather;
-
-      const vertically = lat >= w_lat - 0.005 && lat <= w_lat + 0.005;
-      const horizontally = lon >= w_lon - 0.005 && lon <= w_lon + 0.005;
-
-      if (vertically && horizontally) return normalized_rating;
-    }
-  }
-
   // turn traffics into object
   const traffic_object = {};
   for (const traffic of traffics) {
@@ -99,45 +120,57 @@ async function get_all_connector_within_bounds(bounds, vehicle_type) {
     traffic_object[connector_id] = indicator_value;
   }
 
-  // normalizing distance & duration values
+  // set default traffic value for connector that doesn't have traffic indicator
+  for (const connector of connectors) {
+    const { connector_id } = connector;
+
+    const traffic_indicator = traffic_object[connector_id];
+
+    if (traffic_indicator) {
+      connector.current_traffic = traffic_indicator;
+    } else {
+      connector.current_traffic = 1;
+    }
+  }
+
+  // set duration value based on current congestion
+  for (const connector of connectors) {
+    const { distance, current_traffic } = connector;
+    const duration = get_duration(distance, current_traffic);
+
+    connector.duration = duration;
+  }
+
+  // normalizing duration values
   let minDuration = Infinity,
-    minDistance = Infinity;
-  let maxDuration = 0,
-    maxDistance = 0;
+    maxDuration = 0;
 
   // search min-max value
   for (const connector of connectors) {
-    const { distance, duration } = connector;
-
-    if (minDistance > distance) minDistance = distance;
-    if (maxDistance < distance) maxDistance = distance;
+    const { duration } = connector;
 
     if (minDuration > duration) minDuration = duration;
     if (maxDuration < duration) maxDuration = duration;
   }
 
-  const deltaDistance = maxDistance - minDistance;
   const deltaDuration = maxDuration - minDuration;
 
   // save normalized value
   for (const connector of connectors) {
-    let { distance, duration, current_traffic } = connector;
-    if (current_traffic === null) current_traffic = 1;
+    const { current_traffic, duration, source_lat, source_lon } = connector;
 
-    const normalizedDistance = (distance - minDistance) / deltaDistance;
     const normalizedDuration = (duration - minDuration) / deltaDuration;
-
-    connector.n_distance = normalizedDistance;
     connector.n_duration = normalizedDuration;
+
+    // set remaining values
     connector.n_traffic = (current_traffic - 1) / 2 || 0;
+    connector.n_condition = search_weather(source_lat, source_lon, weathers);
   }
 
   // turn list into objects
   let connectors_object = {};
   for (const connector of connectors) {
-    const { id, source_node_id, target_node_id, source_lat, source_lon } = connector;
-    connector.traffic = traffic_object[id] || 1;
-    connector.n_condition = search_weather(source_lat, source_lon);
+    const { source_node_id, target_node_id } = connector;
     connectors_object[`${source_node_id},${target_node_id}`] = connector;
   }
 

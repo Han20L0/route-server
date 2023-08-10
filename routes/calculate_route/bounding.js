@@ -1,15 +1,9 @@
 const PADDING = 0.01;
 
-e = 107.5249;
-n = -6.9605;
-w = 107.6608;
-s = -6.9926;
-
-const MAXEAST = 107.5249,
-  MAXNORTH = -6.9605,
-  MAXWEST = 107.6608,
-  MAXSOUTH = -6.9926;
-
+const MAXEAST = 107.5126878,
+  MAXNORTH = -6.9419709,
+  MAXWEST = 107.7046799,
+  MAXSOUTH = -7.029609;
 function set_bounds(sourceCoordinates, targetCoordinates) {
   // approaches
   // 1. get latitude and longitude of coords

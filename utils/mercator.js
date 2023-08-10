@@ -1,3 +1,4 @@
+// via https://stackoverflow.com/a/23463262/12125511
 const MERCATOR = {
   fromLatLngToPoint: function (latLng) {
     var siny = Math.min(Math.max(Math.sin(latLng.latitude * (Math.PI / 180)), -0.9999), 0.9999);
