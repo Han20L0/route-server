@@ -97,7 +97,6 @@ async function store_nodes(mysqlConnection) {
   print_progress(`storing nodes data finished. total data: ${count}`);
   console.log();
 }
-
 async function store_source(mysqlConnection) {
   await create_ways_db(mysqlConnection);
   await store_ways(mysqlConnection);

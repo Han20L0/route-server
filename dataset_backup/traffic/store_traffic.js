@@ -91,6 +91,10 @@ async function store_traffics_data(mysqlConnection) {
     for (const id in traffic_datas) {
       const { numberId } = connectors[id];
 
+      if (id === "5477100011,5477100032") {
+        console.log("a");
+      }
+
       const { dominantNumber: indicator_value } = traffic_datas[id];
 
       const metadata = { day_name, hour };

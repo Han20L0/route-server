@@ -75,7 +75,7 @@ async function store_weathers_data(mysqlConnection) {
       for (const [hour, data] of weather_data[latLon].entries()) {
         const { text, code } = data.condition;
         const rating = get_weather_rating(code);
-        const normalized_rating = rating / 5.7;
+        const normalized_rating = (rating - 1) / 4.7;
 
         query_list.push(store_weather_entries(mysqlConnection, lat, lon, day_name, hour, code, rating, normalized_rating, text));
         count++;

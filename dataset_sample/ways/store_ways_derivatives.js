@@ -28,7 +28,7 @@ function print_progress(text) {
 async function create_connectors_table(mysqlConnection) {
   print_progress(`creating connectors table...`);
 
-  let query = `CREATE TABLE tb_connector ( id int(11) NOT NULL, source_lat double NOT NULL, source_lon double NOT NULL, target_lat double NOT NULL, target_lon double NOT NULL, source_node_id bigint(20) NOT NULL, target_node_id bigint(20) NOT NULL, via_way_id bigint(20) NOT NULL, geometry varchar(8192) NOT NULL, is_accessible_car int(1) NULL, is_accessible_motor int(1) NULL, cardinal varchar(20) NOT NULL, heading varchar(20) NOT NULL, angle double NOT NULL, distance double NOT NULL, duration double NOT NULL, neighbour_ids longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL CHECK (json_valid(neighbour_ids))) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;`;
+  let query = `CREATE TABLE tb_connector ( id int(11) NOT NULL, source_lat double NOT NULL, source_lon double NOT NULL, target_lat double NOT NULL, target_lon double NOT NULL, source_node_id bigint(20) NOT NULL, target_node_id bigint(20) NOT NULL, via_way_id bigint(20) NOT NULL, geometry varchar(8192) NOT NULL, is_accessible_car int(1) NULL, is_accessible_motor int(1) NULL, cardinal varchar(20) NOT NULL, heading varchar(20) NOT NULL, angle double NOT NULL, distance double NOT NULL, n_distance double NOT NULL, neighbour_ids longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL CHECK (json_valid(neighbour_ids))) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;`;
   await promisify(mysqlConnection, query);
   query = `ALTER TABLE tb_connector ADD PRIMARY KEY (id)`;
   await promisify(mysqlConnection, query);
@@ -61,11 +61,12 @@ async function store_connectors(mysqlConnection) {
         source: { sourceLat, sourceLon },
         target: { targetLat, targetLon },
       },
-      d_d: { distance, duration },
+      distance,
+      normalized_distance,
       neighbour_ids,
     } = connectors[id];
 
-    const query = `INSERT INTO tb_connector ( source_node_id, target_node_id, via_way_id, geometry, source_lat, source_lon, target_lat, target_lon, is_accessible_car, is_accessible_motor, cardinal, heading, angle, distance, duration, neighbour_ids) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+    const query = `INSERT INTO tb_connector ( source_node_id, target_node_id, via_way_id, geometry, source_lat, source_lon, target_lat, target_lon, is_accessible_car, is_accessible_motor, cardinal, heading, angle, distance, n_distance, neighbour_ids) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
     const values = [
       parseInt(source_node_id),
       parseInt(target_node_id),
@@ -81,7 +82,7 @@ async function store_connectors(mysqlConnection) {
       heading,
       angle,
       distance,
-      duration,
+      normalized_distance,
       JSON.stringify(neighbour_ids),
     ];
 
